@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using System.IO;
 
 namespace RSADClassesParser
 {
@@ -28,6 +29,25 @@ namespace RSADClassesParser
 
             return name.StartsWith("SW") // change this depending on your RSAD project
                    || (name.StartsWith("I") && Char.IsUpper(name.ToCharArray()[1]));
+        }
+
+        private static void Output(IEnumerable<ParsedElement> parsedElements, string path)
+        {
+            if (path.Equals("console"))
+            {
+                foreach (ParsedElement p in parsedElements)
+                {
+                    Console.WriteLine(p);
+                }
+            }
+            else
+            {
+                foreach(ParsedElement p in parsedElements)
+                {
+                    File.WriteAllText(Path.Combine(path, p.Name + ".java"), p.ToString());
+                }
+                RSADClassesParser.Program.Options.Log("Successfully written to files!");
+            }
         }
 
         public EmxParser(String path)
@@ -304,11 +324,7 @@ namespace RSADClassesParser
 
             this.AddOperations(parsedElements);
 
-            foreach (ParsedElement p in parsedElements)
-            {
-                Console.WriteLine(p);
-            }
-
+            EmxParser.Output(parsedElements, RSADClassesParser.Program.Options.output);
         }
     }
 }
