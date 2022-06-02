@@ -29,11 +29,11 @@ As said before, if the path can't be accessed then it'll just print on the conso
 
 ##### 
 
-> [Log 02/06/2022 22:03:06] Checking if C:\Users\crist\Desktop\laboratorio-8-blackbox\TravelOn\Blank Package.emx is a valid .emx path...
-[Log 02/06/2022 22:03:06] Checking if C:\Users\crist\Desktop\FileJava can be a valid output path...
-[Log 02/06/2022 22:03:06] Using C:\Users\crist\Desktop\FileJava as the output path!
-[Log 02/06/2022 22:03:06] Done! Parsing .emx...
-[Log 02/06/2022 22:03:06] Found 38 SW classes/interfaces!
+> [Log 02/06/2022 22:03:06] Checking if C:\Users\crist\Desktop\laboratorio-8-blackbox\TravelOn\Blank Package.emx is a valid .emx path...<br>
+[Log 02/06/2022 22:03:06] Checking if C:\Users\crist\Desktop\FileJava can be a valid output path...<br>
+[Log 02/06/2022 22:03:06] Using C:\Users\crist\Desktop\FileJava as the output path!<br>
+[Log 02/06/2022 22:03:06] Done! Parsing .emx...<br>
+[Log 02/06/2022 22:03:06] Found 38 SW classes/interfaces!<br>
 [Log 02/06/2022 22:03:06] Successfully written to files!
 
 
