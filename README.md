@@ -2,7 +2,7 @@
 
 ## What is this?
 
-RSADClassesParser is a C# ConsoleApplication made for generating Java code from a RSAD .emx project file. It scans the .emx for software classes (starting with "SW") and interfaces and, after parsing the classes, attributes, operations with parameters etc., it outputs the generated code (operations will have an empty body for now).
+RSADClassesParser is a C# ConsoleApplication made for generating Java code from a RSAD .emx project file. It scans the .emx for software classes (starting with "SW") and interfaces and, after parsing the classes, attributes, operations with parameters etc., it outputs the generated code (operations will have an empty body).
 
 ## Getting started
 
