@@ -26,7 +26,7 @@ namespace RSADClassesParser
             this.visibility = visibility;
             this.isStatic = isStatic;
             this.returnsList = ParsedOperation.NamesThatReturnList.ContainsKey(name);
-            this.returnType = !ParsedOperation.NamesThatReturnList.ContainsKey(name) ? name : ParsedOperation.NamesThatReturnList[name];
+            this.returnType = !ParsedOperation.NamesThatReturnList.ContainsKey(name) ? returnType : ParsedOperation.NamesThatReturnList[name];
             this.name = name;
             this.parameters = new List<ParsedParameter>();
         }
