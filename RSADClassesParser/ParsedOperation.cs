@@ -4,7 +4,10 @@ namespace RSADClassesParser
 {
     internal class ParsedOperation
     {
-        private static readonly Dictionary<string, string> NamesThatReturnList = new Dictionary<string, string>(){ { "ricercaPacchetti", "SWPacchettoVacanza" } }; // insert them manually here
+        private static readonly Dictionary<string, string> NamesThatReturnList = new Dictionary<string, string>()
+        { 
+            { "ricercaPacchetti", "SWPacchettoVacanza" } 
+        }; // insert them manually here
         
         private static readonly IList<string> ConstructorNames = new ReadOnlyCollection<string>(new List<string> { "create" }); // even if you should always use "create"
 

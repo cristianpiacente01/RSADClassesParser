@@ -9,9 +9,6 @@ namespace RSADClassesParser
         public class Options
         {
 
-            [Option('c', "collab", Required = false, HelpText = "Specify your RSAD's collaboration name to extract operations' calls (TODO).")]
-            public string Collaboration { get; set; }
-
             [Option('i', "input", Required = false, HelpText = "Set the .emx path, by default it's \"Blank Package.emx\" in the current directory")]
             public string InputPath { get; set; }
 
