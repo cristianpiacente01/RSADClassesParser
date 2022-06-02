@@ -95,9 +95,10 @@ namespace RSADClassesParser
                     return ret;
             }
 
+            string xname = action == EmxParser.Generalizations ? "general" : "supplier";
+
             foreach (XElement element in query)
             {
-                string xname = action == EmxParser.Generalizations ? "general" : "supplier";
                 string id = element.Attribute(xname).Value;
                 if (this.bigMap.ContainsKey(id))
                 {
