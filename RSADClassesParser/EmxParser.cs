@@ -13,12 +13,15 @@ namespace RSADClassesParser
 
         private Dictionary<string, XElement> idMap;
 
+        private Dictionary<string, ParsedElement> parsedIdMap; // not very efficient ik
+
         private XDocument doc;
 
         public EmxParser(String path)
         {
             doc = XDocument.Load(path);
             idMap = new Dictionary<string, XElement>();
+            parsedIdMap = new Dictionary<string, ParsedElement>();
         }
 
         private Boolean isSWClassOrInterface(string type, string name)
@@ -47,7 +50,7 @@ namespace RSADClassesParser
             // uml:DataType
             IEnumerable<XElement> query = from e in doc.Root.Descendants("packagedElement")
                         where e.Attribute(xmi + "type") != null
-                        && e.Attribute("name") != null
+                        //&& e.Attribute("name") != null
                         && e.Attribute(xmi + "type").Value.Equals("uml:DataType")
                         select e;
 
@@ -63,6 +66,36 @@ namespace RSADClassesParser
             }
         }
 
+        private List<ParsedClass> parseGeneralizations(XElement parent, string parentId)
+        {
+            List<ParsedClass> ret = new List<ParsedClass>();
+
+            IEnumerable<XElement> query = from g in parent.Descendants("generalization")
+                                          where g.Attribute(xmi + "id") != null
+                                          && g.Attribute("general") != null
+                                          select g;
+
+            if (query.Count() > 0)
+            {
+                foreach (XElement gen in query)
+                {
+                    string generalId = gen.Attribute("general").Value;
+                    if (parsedIdMap.ContainsKey(generalId))
+                    {
+                        ParsedClass temp = (ParsedClass)parsedIdMap[generalId];
+                        temp.addExtendedClasses(parseGeneralizations(idMap[temp.Id], temp.Id));
+                        ret.Add(temp);
+                    }
+                    else
+                    {
+                        Console.WriteLine("[AAA] this is some weird shit");
+                    }
+                }
+            }
+
+            return ret;
+        }
+
         private IEnumerable<ParsedElement> createElements(IEnumerable<XElement> elements)
         {
             List<ParsedElement> list = new List<ParsedElement>();
@@ -73,17 +106,23 @@ namespace RSADClassesParser
                 string type = e.Attribute(xmi + "type").Value;
                 string name = e.Attribute("name").Value;
 
+                ParsedElement parsedEl;
+
                 if (type.Equals("uml:Interface"))
                 {
-                    list.Add(new ParsedInterface(id, name));
+                    parsedEl = new ParsedInterface(id, name);
                 } 
                 else // uml:Class
                 {
                     Boolean isAbstract = e.Attribute("isAbstract") != null
                         && e.Attribute("isAbstract").Value.Equals("true");
 
-                    list.Add(new ParsedClass(id, name, isAbstract));
+                    parsedEl = new ParsedClass(id, name, isAbstract);
                 }
+
+                list.Add(parsedEl);
+                parsedIdMap.Add(id, parsedEl);
+
             }
 
             return list;
@@ -136,6 +175,19 @@ namespace RSADClassesParser
             }
         }
 
+        private void updateGen(IEnumerable<ParsedElement> elements)
+        {
+            foreach (ParsedElement p in elements)
+            {
+                if (p.GetType().Name.Equals("ParsedClass"))
+                {
+                    XElement xelement = idMap[p.Id];
+                    List<ParsedClass> parsedGen = parseGeneralizations(xelement, p.Id);
+                    ((ParsedClass)p).addExtendedClasses(parsedGen);
+                }
+            }
+        }
+
         public void parse()
         {
             if (doc.Root == null)
@@ -152,16 +204,13 @@ namespace RSADClassesParser
 
             Program.Options.Log("Found " + elements.Count() + " SW classes/interfaces!");
 
-            updateMap(elements);
+            updateMap(elements); // this updates the <string, XElement> map
 
-            IEnumerable<ParsedElement> parsedElements = createElements(elements);
-
-            /*foreach (ParsedElement p in parsedElements)
-            {
-                Console.WriteLine(p.GetType().Name + " " + p.Name);
-            }*/
+            IEnumerable<ParsedElement> parsedElements = createElements(elements); // this updates the <string, ParsedElement> map
 
             addAttributes(parsedElements);
+
+            updateGen(parsedElements);
 
             foreach (ParsedElement p in parsedElements)
             {
