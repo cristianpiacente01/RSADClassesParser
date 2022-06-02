@@ -20,6 +20,8 @@ namespace RSADClassesParser
         private string name;
         private List<ParsedParameter> parameters;
 
+        public string Visibility { get { return visibility; } }
+
         // TODO body
 
         public ParsedOperation(string id, ParsedElement owner, string visibility, Boolean isStatic, string returnType, string name)
@@ -45,11 +47,16 @@ namespace RSADClassesParser
             }
         }
 
+        public Boolean IsConstructor()
+        {
+            return ConstructorNames.Contains(this.name);
+        }
+
         public override string ToString()
         {
             string ret = "";
             ret += this.visibility + " ";
-            if (!ConstructorNames.Contains(this.name))
+            if (!IsConstructor())
             {
                 ret += (this.isStatic ? "static " : "");
                 ret += (this.returnsList ? ("List<" + this.returnType + ">") : this.returnType) + " ";

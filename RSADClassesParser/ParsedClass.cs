@@ -51,7 +51,7 @@ namespace RSADClassesParser
             this.GetExtends(); // eventually updates multiple inheritance
         }
 
-        private void UpdateInheritedAttributes(ParsedClass c)
+        private void UpdateInheritedAttributesAndOp(ParsedClass c)
         {
             // used to support multiple inheritance
             foreach (ParsedAttribute attr in c.attributes)
@@ -61,6 +61,14 @@ namespace RSADClassesParser
                     this.AddAttribute(attr);
                 }
             }
+            foreach (ParsedOperation op in c.operations)
+            {
+                if (!op.Visibility.Equals("private") && !op.IsConstructor())
+                {
+                    this.AddOperation(op);
+                }
+            }
+
         }
 
         private string GetExtends()
@@ -76,7 +84,7 @@ namespace RSADClassesParser
                 int count = this.extendedClasses.Count() - 1;
                 foreach (ParsedClass c in this.extendedClasses.GetRange(1, count))
                 {
-                    this.UpdateInheritedAttributes(c);
+                    this.UpdateInheritedAttributesAndOp(c);
                     toRemove.Add(c);
                     this.multipleInheritedClassNames.Add(c.Name);
                 }
@@ -102,7 +110,10 @@ namespace RSADClassesParser
 
         public void AddAttribute(ParsedAttribute a)
         {
-            this.attributes.Add(a);
+            if (!this.attributes.Contains(a))
+            {
+                this.attributes.Add(a);
+            }
         }
 
         public override string ToString()

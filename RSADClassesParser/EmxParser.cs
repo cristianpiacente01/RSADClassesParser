@@ -318,11 +318,11 @@ namespace RSADClassesParser
 
             this.AddAttributes(parsedElements);
 
+            this.AddOperations(parsedElements);
+
             this.UpdateGenOrImpl(parsedElements, EmxParser.Generalizations);
 
             this.UpdateGenOrImpl(parsedElements, EmxParser.InterfacesRealization);
-
-            this.AddOperations(parsedElements);
 
             EmxParser.Output(parsedElements, RSADClassesParser.Program.Options.output);
         }
