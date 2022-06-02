@@ -28,14 +28,14 @@ namespace RSADClassesParser
                 Environment.Exit(0);
             }
 
-            public string getEmxPath()
+            public string GetEmxPath()
             {
                 return (InputPath != null) ? InputPath : (Path.Combine(Directory.GetCurrentDirectory(), "Blank Package.emx"));
             }
 
         }
 
-        static void pathChecks(string path)
+        static void DoPathChecks(string path)
         {
             
             if (!File.Exists(path))
@@ -53,14 +53,14 @@ namespace RSADClassesParser
             Parser.Default.ParseArguments<Options>(args)
                    .WithParsed<Options>(o =>
                    {
-                       string path = o.getEmxPath();
+                       string path = o.GetEmxPath();
 
                        Options.Log("Checking if " + path + " is a valid .emx path...");
-                       pathChecks(path);
+                       Program.DoPathChecks(path);
                        Options.Log("OK! Parsing .emx...");
 
                        EmxParser parser = new EmxParser(path);
-                       parser.parse();
+                       parser.Parse();
                    });
         }
     }

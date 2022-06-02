@@ -8,7 +8,7 @@ namespace RSADClassesParser
 {
     internal abstract class ParsedElement
     {
-        protected string id; // used for further parsing
+        protected string id;
         protected string name;
 
         protected List<object> operations; // TODO
@@ -23,5 +23,11 @@ namespace RSADClassesParser
         public string Id { get { return this.id; } }
 
         public string Name { get { return this.name; } }
+
+        public override bool Equals(Object obj)
+        {
+            return obj.GetType().IsSubclassOf(typeof(ParsedElement))
+                && ((ParsedElement)obj).Id.Equals(this.id);
+        }
     }
 }

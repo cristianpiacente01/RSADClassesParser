@@ -28,30 +28,42 @@ namespace RSADClassesParser
             this.multipleInheritedClassNames = new List<string>();
         }
 
-        public void addExtendedClasses(List<ParsedClass> list)
+        public void AddImplementedInterfaces(List<ParsedInterface> list)
         {
-            foreach (ParsedClass p in list)
+            foreach (ParsedInterface p in list)
             {
-                if (!this.extendedClasses.Contains(p))
+                if (!this.implementedInterfaces.Contains(p))
                 {
-                    this.extendedClasses.Add(p);
+                    this.implementedInterfaces.Add(p);
                 }
             }
         }
 
-        private void updateInheritedAttributes(ParsedClass c)
+        public void AddExtendedClasses(List<ParsedClass> list)
+        {
+            foreach (ParsedClass p in list)
+            {
+                if (!this.extendedClasses.Contains(p) && !this.multipleInheritedClassNames.Contains(p.Name))
+                {
+                    this.extendedClasses.Add(p);
+                }
+            }
+            this.GetExtends(); // eventually updates multiple inheritance
+        }
+
+        private void UpdateInheritedAttributes(ParsedClass c)
         {
             // used to support multiple inheritance
             foreach (ParsedAttribute attr in c.attributes)
             {
                 if (!attr.Visibility.Equals("private"))
                 {
-                    this.addAttribute(attr);
+                    this.AddAttribute(attr);
                 }
             }
         }
 
-        private string getExtends()
+        private string GetExtends()
         {
             string ret = "";
             if (this.extendedClasses.Count() != 0)
@@ -64,7 +76,7 @@ namespace RSADClassesParser
                 int count = this.extendedClasses.Count() - 1;
                 foreach (ParsedClass c in this.extendedClasses.GetRange(1, count))
                 {
-                    this.updateInheritedAttributes(c);
+                    this.UpdateInheritedAttributes(c);
                     toRemove.Add(c);
                     this.multipleInheritedClassNames.Add(c.Name);
                 }
@@ -73,7 +85,7 @@ namespace RSADClassesParser
             return ret;
         }
 
-        private string getImplements()
+        private string GetImplements()
         {
             string ret = "";
             foreach (ParsedInterface i in implementedInterfaces)
@@ -90,7 +102,7 @@ namespace RSADClassesParser
 
         public Boolean IsAbstract { get; }
 
-        public void addAttribute(ParsedAttribute a)
+        public void AddAttribute(ParsedAttribute a)
         {
             this.attributes.Add(a);
         }
@@ -101,13 +113,13 @@ namespace RSADClassesParser
             ret += (this.isAbstract ? " abstract" : "");
             ret += " class " + this.name;
 
-            string extendsStr = this.getExtends();
+            string extendsStr = this.GetExtends();
             if (extendsStr.Length > 0)
             {
                 ret += " extends " + extendsStr;
             }
 
-            string implementsStr = this.getImplements();
+            string implementsStr = this.GetImplements();
             if (implementsStr.Length > 0)
             {
                 ret += " implements " + implementsStr;
@@ -129,6 +141,8 @@ namespace RSADClassesParser
                 }
                 ret += Environment.NewLine;
             }
+
+            ret += Environment.NewLine;
 
             ret += "\t" + "// TODO operations" + Environment.NewLine;
 

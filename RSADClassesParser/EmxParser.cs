@@ -11,92 +11,105 @@ namespace RSADClassesParser
     {
         private static XNamespace xmi = "http://www.omg.org/XMI";
 
-        private Dictionary<string, XElement> idMap;
-
-        private Dictionary<string, ParsedElement> parsedIdMap; // not very efficient ik
+        private Dictionary<string, KeyValuePair<XElement, ParsedElement>> bigMap; // the only keys with a null value at the end will be DataTypes, but it's fine
 
         private XDocument doc;
 
-        public EmxParser(String path)
-        {
-            doc = XDocument.Load(path);
-            idMap = new Dictionary<string, XElement>();
-            parsedIdMap = new Dictionary<string, ParsedElement>();
-        }
+        // constants for actions
+        private const int Generalizations = 0;
+        private const int InterfacesRealization = 1;
 
-        private Boolean isSWClassOrInterface(string type, string name)
+        private static Boolean IsSWClassOrInterface(string type, string name)
         {
             if (!type.Equals("uml:Interface") && !type.Equals("uml:Class"))
             {
                 return false;
             }
 
-            return name.StartsWith("SW") 
+            return name.StartsWith("SW") // change this depending on your RSAD project
                    || (name.StartsWith("I") && Char.IsUpper(name.ToCharArray()[1]));
         }
 
-        private IEnumerable<XElement> getSWElements()
+        public EmxParser(String path)
+        {
+            this.doc = XDocument.Load(path);
+            this.bigMap = new Dictionary<string, KeyValuePair<XElement, ParsedElement>>();
+        }
+
+        private IEnumerable<XElement> GetSWElements()
         {
             return from e in doc.Root.Descendants("packagedElement")
                    where e.Attribute(xmi + "type") != null
                    && e.Attribute("name") != null
-                   && isSWClassOrInterface(e.Attribute(xmi + "type").Value, e.Attribute("name").Value)
+                   && EmxParser.IsSWClassOrInterface(e.Attribute(xmi + "type").Value, e.Attribute("name").Value)
                    orderby e.Attribute("name").Value
                    select e;
         }
 
-        private void updateMap(IEnumerable<XElement> elements)
+        private void UpdateMapWithDataTypes()
         {
-            // uml:DataType
             IEnumerable<XElement> query = from e in doc.Root.Descendants("packagedElement")
-                        where e.Attribute(xmi + "type") != null
-                        //&& e.Attribute("name") != null
-                        && e.Attribute(xmi + "type").Value.Equals("uml:DataType")
-                        select e;
+                                          where e.Attribute(xmi + "type") != null
+                                          && e.Attribute(xmi + "type").Value.Equals("uml:DataType")
+                                          select e;
 
             foreach (XElement dataType in query)
             {
-                idMap.Add(dataType.Attribute(xmi + "id").Value, dataType);
-            }
-
-            // uml:Class and uml:Interface
-            foreach (XElement e in elements)
-            {
-                idMap.Add(e.Attribute(xmi + "id").Value, e);
+                KeyValuePair<XElement, ParsedElement> pair = new KeyValuePair<XElement, ParsedElement>(dataType, null);
+                this.bigMap.Add(dataType.Attribute(xmi + "id").Value, pair);
             }
         }
 
-        private List<ParsedClass> parseGeneralizations(XElement parent, string parentId)
+        private ParsedElement ParseGenOrInterfHelper(string id, int action)
         {
-            List<ParsedClass> ret = new List<ParsedClass>();
+            ParsedElement p = this.bigMap[id].Value;
 
-            IEnumerable<XElement> query = from g in parent.Descendants("generalization")
-                                          where g.Attribute(xmi + "id") != null
-                                          && g.Attribute("general") != null
-                                          select g;
-
-            if (query.Count() > 0)
+            if (action == EmxParser.Generalizations)
             {
-                foreach (XElement gen in query)
+                List<ParsedClass> temp = this.ParseGenOrInterf(this.bigMap[p.Id].Key, p.Id, action).Cast<ParsedClass>().ToList();
+                ((ParsedClass)p).AddExtendedClasses(temp);
+            }
+
+            return p;
+        }
+        
+        private List<ParsedElement> ParseGenOrInterf(XElement parent, string parentId, int action)
+        {
+            List<ParsedElement> ret = new List<ParsedElement>();
+
+            IEnumerable<XElement> query;
+
+            switch (action)
+            {
+                case EmxParser.Generalizations:
+                    query = from g in parent.Descendants("generalization")
+                            where g.Attribute("general") != null
+                            select g;
+                    break;
+                case EmxParser.InterfacesRealization:
+                    query = from i in parent.Descendants("interfaceRealization")
+                            where i.Attribute("supplier") != null
+                            select i;
+                    break;
+                default: // what
+                    return ret;
+            }
+
+            foreach (XElement element in query)
+            {
+                string xname = action == EmxParser.Generalizations ? "general" : "supplier";
+                string id = element.Attribute(xname).Value;
+                if (this.bigMap.ContainsKey(id))
                 {
-                    string generalId = gen.Attribute("general").Value;
-                    if (parsedIdMap.ContainsKey(generalId))
-                    {
-                        ParsedClass temp = (ParsedClass)parsedIdMap[generalId];
-                        temp.addExtendedClasses(parseGeneralizations(idMap[temp.Id], temp.Id));
-                        ret.Add(temp);
-                    }
-                    else
-                    {
-                        Console.WriteLine("[AAA] this is some weird shit");
-                    }
+                    ParsedElement parsedElement = ParseGenOrInterfHelper(id, action);
+                    ret.Add(parsedElement);
                 }
             }
 
             return ret;
         }
 
-        private IEnumerable<ParsedElement> createElements(IEnumerable<XElement> elements)
+        private IEnumerable<ParsedElement> CreateElements(IEnumerable<XElement> elements)
         {
             List<ParsedElement> list = new List<ParsedElement>();
 
@@ -106,35 +119,39 @@ namespace RSADClassesParser
                 string type = e.Attribute(xmi + "type").Value;
                 string name = e.Attribute("name").Value;
 
-                ParsedElement parsedEl;
+                ParsedElement parsedElement;
 
                 if (type.Equals("uml:Interface"))
                 {
-                    parsedEl = new ParsedInterface(id, name);
+                    parsedElement = new ParsedInterface(id, name);
                 } 
                 else // uml:Class
                 {
                     Boolean isAbstract = e.Attribute("isAbstract") != null
                         && e.Attribute("isAbstract").Value.Equals("true");
 
-                    parsedEl = new ParsedClass(id, name, isAbstract);
+                    parsedElement = new ParsedClass(id, name, isAbstract);
                 }
 
-                list.Add(parsedEl);
-                parsedIdMap.Add(id, parsedEl);
+                KeyValuePair<XElement, ParsedElement> pair = new KeyValuePair<XElement, ParsedElement>(e, parsedElement);
+                this.bigMap.Add(e.Attribute(xmi + "id").Value, pair);
+
+                list.Add(parsedElement);
 
             }
+
+            this.UpdateMapWithDataTypes(); // uml:DataType
 
             return list;
         }
 
-        private void addAttributes(IEnumerable<ParsedElement> parsedElements) // TODO make this shit prettier
+        private void AddAttributes(IEnumerable<ParsedElement> parsedElements) // TODO make this shit prettier, well not now
         {
             foreach (ParsedElement p in parsedElements)
             {
                 if (p.GetType().Name.Equals("ParsedClass"))
                 {
-                    XElement e = idMap[p.Id];
+                    XElement e = this.bigMap[p.Id].Key;
 
                     IEnumerable<XElement> query = from a in e.Descendants("ownedAttribute")
                                 where a != null
@@ -145,7 +162,7 @@ namespace RSADClassesParser
                         string type;
                         if (a.Attribute("type") != null)
                         {
-                            type = idMap[a.Attribute("type").Value].Attribute("name").Value;
+                            type = this.bigMap[a.Attribute("type").Value].Key.Attribute("name").Value;
                         }
                         else // there's a <type> with xmi:type="uml:PrimitiveType" and stuff in href
                         {
@@ -168,34 +185,40 @@ namespace RSADClassesParser
 
                         Boolean isList = otherQuery.Count() > 0 && otherQuery.First().Attribute("value").Value.EndsWith("*");
                         ParsedAttribute attr = new ParsedAttribute(visibility, isStatic, isList, type, name);
-                        ParsedClass c = (ParsedClass)p;
-                        c.addAttribute(attr);
+                        ((ParsedClass)p).AddAttribute(attr);
                     }
                 }
             }
         }
 
-        private void updateGen(IEnumerable<ParsedElement> elements)
+        private void UpdateGenOrImpl(IEnumerable<ParsedElement> elements, int action)
         {
             foreach (ParsedElement p in elements)
             {
                 if (p.GetType().Name.Equals("ParsedClass"))
                 {
-                    XElement xelement = idMap[p.Id];
-                    List<ParsedClass> parsedGen = parseGeneralizations(xelement, p.Id);
-                    ((ParsedClass)p).addExtendedClasses(parsedGen);
+                    XElement xelement = this.bigMap[p.Id].Key;
+                    List<ParsedElement> parsedElements = this.ParseGenOrInterf(xelement, p.Id, action);
+                    if (action == EmxParser.Generalizations)
+                    {
+                        ((ParsedClass)p).AddExtendedClasses(parsedElements.Cast<ParsedClass>().ToList());
+                    }
+                    else if (action == EmxParser.InterfacesRealization)
+                    {
+                        ((ParsedClass)p).AddImplementedInterfaces(parsedElements.Cast<ParsedInterface>().ToList());
+                    }
                 }
             }
         }
 
-        public void parse()
+        public void Parse()
         {
             if (doc.Root == null)
             {
                 Program.Options.Error("Document root is null!");
             }
 
-            IEnumerable<XElement> elements = getSWElements();
+            IEnumerable<XElement> elements = this.GetSWElements();
 
             if (elements.Count() == 0)
             {
@@ -204,17 +227,17 @@ namespace RSADClassesParser
 
             Program.Options.Log("Found " + elements.Count() + " SW classes/interfaces!");
 
-            updateMap(elements); // this updates the <string, XElement> map
+            IEnumerable<ParsedElement> parsedElements = this.CreateElements(elements); // this also updates bigMap
 
-            IEnumerable<ParsedElement> parsedElements = createElements(elements); // this updates the <string, ParsedElement> map
+            this.AddAttributes(parsedElements);
 
-            addAttributes(parsedElements);
+            this.UpdateGenOrImpl(parsedElements, EmxParser.Generalizations);
 
-            updateGen(parsedElements);
+            this.UpdateGenOrImpl(parsedElements, EmxParser.InterfacesRealization);
 
             foreach (ParsedElement p in parsedElements)
             {
-                Console.WriteLine(p.ToString());
+                Console.WriteLine(p);
             }
 
         }

@@ -36,5 +36,6 @@ namespace RSADClassesParser
         {
             return this.visibility + " " + (this.isStatic ? "static " : "") + (this.isList ? ("List<" + this.type + ">") : this.type) + " " + this.name;
         }
+
     }
 }
