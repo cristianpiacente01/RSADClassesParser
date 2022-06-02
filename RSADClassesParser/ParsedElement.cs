@@ -22,15 +22,10 @@ namespace RSADClassesParser
 
         public void AddOperation(ParsedOperation op)
         {
-            if (!operations.Contains(op))
+            if (!this.operations.Contains(op))
             {
-                operations.Add(op);
+                this.operations.Add(op);
             }
-        }
-
-        public int GetN()
-        {
-            return this.operations.Count();
         }
 
         public string Id { get { return this.id; } }

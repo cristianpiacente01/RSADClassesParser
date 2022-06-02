@@ -100,8 +100,6 @@ namespace RSADClassesParser
             return ret;
         }
 
-        public Boolean IsAbstract { get; }
-
         public void AddAttribute(ParsedAttribute a)
         {
             this.attributes.Add(a);

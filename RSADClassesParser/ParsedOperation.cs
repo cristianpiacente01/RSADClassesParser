@@ -4,8 +4,9 @@ namespace RSADClassesParser
 {
     internal class ParsedOperation
     {
-        private static readonly IList<string> NamesThatReturnList = new ReadOnlyCollection<string>(new List<string> { "ricercaPacchetti" }); // insert them manually here
-        private static readonly IList<string> ConstructorNames = new ReadOnlyCollection<string>(new List<string> { "create" }); // even if you should always use create
+        private static readonly Dictionary<string, string> NamesThatReturnList = new Dictionary<string, string>(){ { "ricercaPacchetti", "SWPacchettoVacanza" } }; // insert them manually here
+        
+        private static readonly IList<string> ConstructorNames = new ReadOnlyCollection<string>(new List<string> { "create" }); // even if you should always use "create"
 
         private string id;
         private ParsedElement owner;
@@ -16,7 +17,7 @@ namespace RSADClassesParser
         private string name;
         private List<ParsedParameter> parameters;
 
-        private List<ParsedOperation> calls; // TODO
+        // TODO body
 
         public ParsedOperation(string id, ParsedElement owner, string visibility, Boolean isStatic, string returnType, string name)
         {
@@ -24,11 +25,10 @@ namespace RSADClassesParser
             this.owner = owner;
             this.visibility = visibility;
             this.isStatic = isStatic;
-            this.returnsList = ParsedOperation.NamesThatReturnList.Contains(name);
-            this.returnType = returnType;
+            this.returnsList = ParsedOperation.NamesThatReturnList.ContainsKey(name);
+            this.returnType = !ParsedOperation.NamesThatReturnList.ContainsKey(name) ? name : ParsedOperation.NamesThatReturnList[name];
             this.name = name;
             this.parameters = new List<ParsedParameter>();
-            //this.calls = new List<ParsedOperation>();
         }
 
         public void AddParameters(List<ParsedParameter> list)

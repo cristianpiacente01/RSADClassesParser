@@ -22,7 +22,7 @@ namespace RSADClassesParser
 
         public override string ToString()
         {
-            return type + " " + name;
+            return this.type + " " + this.name;
         }
     }
 }
