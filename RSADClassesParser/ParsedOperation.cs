@@ -65,10 +65,14 @@ namespace RSADClassesParser
             {
                 ret += this.parameters[this.parameters.Count() - 1];
             }
-            ret += ");";
+            ret += ")";
             if (owner.GetType().Name.Equals("ParsedClass"))
             {
-                ret += " // TODO body";
+                ret += " { } // TODO body";
+            }
+            else
+            {
+                ret += ";";
             }
             return ret;
         }
