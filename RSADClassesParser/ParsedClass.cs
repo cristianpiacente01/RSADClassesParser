@@ -144,7 +144,10 @@ namespace RSADClassesParser
 
             ret += Environment.NewLine;
 
-            ret += "\t" + "// TODO operations" + Environment.NewLine;
+            foreach (ParsedOperation op in this.operations)
+            {
+                ret += "\t" + op.ToString() + Environment.NewLine;
+            }
 
             ret += "}";
 

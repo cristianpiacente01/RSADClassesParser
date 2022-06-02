@@ -7,7 +7,7 @@ using System.Xml.Linq;
 
 namespace RSADClassesParser
 {
-    internal class EmxParser
+    public class EmxParser
     {
         private static XNamespace xmi = "http://www.omg.org/XMI";
 
@@ -160,21 +160,7 @@ namespace RSADClassesParser
 
                     foreach (XElement a in query)
                     {
-                        string type;
-                        if (a.Attribute("type") != null)
-                        {
-                            type = this.bigMap[a.Attribute("type").Value].Key.Attribute("name").Value;
-                        }
-                        else // there's a <type> with xmi:type="uml:PrimitiveType" and stuff in href
-                        {
-                            XElement typeElement = a.Descendants("type").First();
-                            type = typeElement.Attribute("href").Value.Substring(typeElement.Attribute("href").Value.LastIndexOf("#") + 1);
-                            if (type.StartsWith("_") && type.EndsWith("?"))
-                            {
-                                type = type.Substring(type.LastIndexOf("/") + 1);
-                                type = type.Substring(0, type.Length - 1);
-                            }
-                        }
+                        string type = this.GetTypeString(a);
                         string name = a.Attribute("name").Value;
                         string visibility = a.Attribute("visibility").Value;
                         Boolean isStatic = a.Attribute("isStatic") != null
@@ -188,6 +174,86 @@ namespace RSADClassesParser
                         ParsedAttribute attr = new ParsedAttribute(visibility, isStatic, isList, type, name);
                         ((ParsedClass)p).AddAttribute(attr);
                     }
+                }
+            }
+        }
+
+        private string GetTypeString(XElement ownedAttrOrParam)
+        {
+            string type;
+            if (ownedAttrOrParam.Attribute("type") != null)
+            {
+                type = this.bigMap[ownedAttrOrParam.Attribute("type").Value].Key.Attribute("name").Value;
+            }
+            else // there's a <type> with xmi:type="uml:PrimitiveType" and stuff in href
+            {
+                XElement typeElement = ownedAttrOrParam.Descendants("type").First();
+                type = typeElement.Attribute("href").Value.Substring(typeElement.Attribute("href").Value.LastIndexOf("#") + 1);
+                if (type.StartsWith("_") && type.EndsWith("?"))
+                {
+                    type = type.Substring(type.LastIndexOf("/") + 1);
+                    type = type.Substring(0, type.Length - 1);
+                }
+            }
+            return type;
+        }
+
+        private void AddOperations(IEnumerable<ParsedElement> parsedElements) // TODO make this shit prettier, well not now
+        {
+            foreach (ParsedElement p in parsedElements)
+            {
+                XElement e = this.bigMap[p.Id].Key;
+
+                IEnumerable<XElement> queryOp = from op in e.Descendants("ownedOperation")
+                                              where op != null
+                                              select op;
+
+                foreach (XElement opElement in queryOp)
+                {
+                    string name = opElement.Attribute("name").Value;
+
+                    string id = opElement.Attribute(xmi + "id").Value;
+
+                    string visibility = opElement.Attribute("visibility") == null
+                        ? "public" : opElement.Attribute("visibility").Value;
+
+                    Boolean isStatic = opElement.Attribute("isStatic") != null
+                            && opElement.Attribute("isStatic").Value.Equals("true");
+
+                    string returnType = "void";
+
+                    IEnumerable<XElement> returnTypeQuery = from returnP in opElement.Descendants("ownedParameter")
+                                                            where returnP != null
+                                                            && returnP.Attribute("direction") != null
+                                                            && returnP.Attribute("direction").Value.Equals("return")
+                                                            select returnP;
+
+                    if (returnTypeQuery.Count() > 0)
+                    {
+                        returnType = this.bigMap[returnTypeQuery.First().Attribute("type").Value].Value.Name;
+                    }
+
+                    ParsedOperation parsedOperation = new ParsedOperation(id, p, visibility, isStatic, returnType, name);
+
+                    IEnumerable<XElement> paramsQuery = from par in opElement.Descendants("ownedParameter")
+                                                        where par != null
+                                                        && par.Attribute("direction") == null
+                                                        && par.Attribute("name") != null
+                                                        select par;
+
+                    List<ParsedParameter> parameters = new List<ParsedParameter>();
+
+                    foreach (XElement param in paramsQuery)
+                    {
+                        string paramType = this.GetTypeString(param);
+                        ParsedParameter newParam = new ParsedParameter(paramType, param.Attribute("name").Value);
+                        parameters.Add(newParam);
+                    }
+
+                    parsedOperation.AddParameters(parameters);
+
+                    this.bigMap[p.Id].Value.AddOperation(parsedOperation);
+
                 }
             }
         }
@@ -235,6 +301,8 @@ namespace RSADClassesParser
             this.UpdateGenOrImpl(parsedElements, EmxParser.Generalizations);
 
             this.UpdateGenOrImpl(parsedElements, EmxParser.InterfacesRealization);
+
+            this.AddOperations(parsedElements);
 
             foreach (ParsedElement p in parsedElements)
             {

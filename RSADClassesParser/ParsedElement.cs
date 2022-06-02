@@ -11,13 +11,26 @@ namespace RSADClassesParser
         protected string id;
         protected string name;
 
-        protected List<object> operations; // TODO
+        protected List<ParsedOperation> operations;
 
         public ParsedElement(string id, string name)
         {
             this.id = id;
             this.name = name;
-            //this.operations = new List<object>();
+            this.operations = new List<ParsedOperation>();
+        }
+
+        public void AddOperation(ParsedOperation op)
+        {
+            if (!operations.Contains(op))
+            {
+                operations.Add(op);
+            }
+        }
+
+        public int GetN()
+        {
+            return this.operations.Count();
         }
 
         public string Id { get { return this.id; } }

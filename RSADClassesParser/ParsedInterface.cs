@@ -15,7 +15,12 @@ namespace RSADClassesParser
         public override string ToString()
         {
             string ret = "public interface " + this.name + " {" + Environment.NewLine;
-            ret += "\t" + "// TODO operations" + Environment.NewLine;
+
+            foreach (ParsedOperation op in this.operations)
+            {
+                ret += "\t" + op.ToString() + Environment.NewLine;
+            }
+
             ret += "}";
             return ret;
         }
