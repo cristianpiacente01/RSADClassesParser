@@ -122,7 +122,7 @@ namespace RSADClassesParser
                 string id = element.Attribute(xname).Value;
                 if (this.bigMap.ContainsKey(id))
                 {
-                    ParsedElement parsedElement = ParseGenOrInterfHelper(id, action);
+                    ParsedElement parsedElement = this.ParseGenOrInterfHelper(id, action);
                     ret.Add(parsedElement);
                 }
             }
@@ -250,7 +250,7 @@ namespace RSADClassesParser
 
                     if (returnTypeQuery.Count() > 0)
                     {
-                        returnType = this.bigMap[returnTypeQuery.First().Attribute("type").Value].Value.Name;
+                        returnType = this.GetTypeString(returnTypeQuery.First());
                     }
 
                     ParsedOperation parsedOperation = new ParsedOperation(id, p, visibility, isStatic, returnType, name);
@@ -272,8 +272,7 @@ namespace RSADClassesParser
 
                     parsedOperation.AddParameters(parameters);
 
-                    this.bigMap[p.Id].Value.AddOperation(parsedOperation);
-
+                    p.AddOperation(parsedOperation);
                 }
             }
         }
