@@ -239,6 +239,9 @@ namespace RSADClassesParser
                     Boolean isStatic = opElement.Attribute("isStatic") != null
                             && opElement.Attribute("isStatic").Value.Equals("true");
 
+                    Boolean isAbstract = opElement.Attribute("isAbstract") != null
+                            && opElement.Attribute("isAbstract").Value.Equals("true");
+
                     string returnType = "void";
 
                     IEnumerable<XElement> returnTypeQuery = from returnP in opElement.Descendants("ownedParameter")
@@ -252,7 +255,7 @@ namespace RSADClassesParser
                         returnType = this.GetTypeString(returnTypeQuery.First());
                     }
 
-                    ParsedOperation parsedOperation = new ParsedOperation(id, p, visibility, isStatic, returnType, name);
+                    ParsedOperation parsedOperation = new ParsedOperation(id, p, visibility, isStatic, isAbstract, returnType, name);
 
                     IEnumerable<XElement> paramsQuery = from par in opElement.Descendants("ownedParameter")
                                                         where par != null

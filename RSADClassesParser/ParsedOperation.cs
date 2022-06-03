@@ -15,6 +15,7 @@ namespace RSADClassesParser
         private ParsedElement owner;
         private string visibility;
         private Boolean isStatic;
+        private Boolean isAbstract;
         private Boolean returnsList;
         private string returnType;
         private string name;
@@ -24,12 +25,13 @@ namespace RSADClassesParser
 
         // TODO body
 
-        public ParsedOperation(string id, ParsedElement owner, string visibility, Boolean isStatic, string returnType, string name)
+        public ParsedOperation(string id, ParsedElement owner, string visibility, Boolean isStatic, Boolean isAbstract, string returnType, string name)
         {
             this.id = id;
             this.owner = owner;
             this.visibility = visibility;
             this.isStatic = isStatic;
+            this.isAbstract = isAbstract;
             this.returnsList = ParsedOperation.NamesThatReturnList.ContainsKey(name);
             this.returnType = !ParsedOperation.NamesThatReturnList.ContainsKey(name) ? returnType : ParsedOperation.NamesThatReturnList[name];
             this.name = name;
@@ -58,7 +60,10 @@ namespace RSADClassesParser
             ret += this.visibility + " ";
             if (!IsConstructor())
             {
+                // I won't check if both static and abstract are true, idk why RSAD lets you do that, they shouldn't coexist
                 ret += (this.isStatic ? "static " : "");
+                ret += (this.isAbstract ? "abstract " : "");
+
                 ret += (this.returnsList ? ("List<" + this.returnType + ">") : this.returnType) + " ";
                 ret += this.name + "(";
             }
