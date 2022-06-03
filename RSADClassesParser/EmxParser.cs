@@ -211,8 +211,7 @@ namespace RSADClassesParser
                 type = typeElement.Attribute("href").Value.Substring(typeElement.Attribute("href").Value.LastIndexOf("#") + 1);
                 if (type.StartsWith("_") && type.EndsWith("?"))
                 {
-                    type = type.Substring(type.LastIndexOf("/") + 1);
-                    type = type.Substring(0, type.Length - 1);
+                    type = type.Substring(type.LastIndexOf("/") + 1, type.Length - type.LastIndexOf("/") - 2);
                 }
             }
             return type;
